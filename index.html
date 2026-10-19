@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Craft | Cosmic Creative Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Web Audio Synthesis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        cosmic: {
+                            bg: '#0a0a16',
+                            card: 'rgba(18, 18, 42, 0.6)',
+                            border: 'rgba(139, 92, 246, 0.2)',
+                            cyan: '#00f0ff',
+                            purple: '#8b5cf6',
+                            pink: '#ff007f',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 15px rgba(139, 92, 246, 0.4)' },
+                            '100%': { boxShadow: '0 0 30px rgba(0, 240, 255, 0.8)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Glassmorphism & Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e1b4b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+
+        .glass-panel {
+            background: rgba(18, 18, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 240, 255, 0.5);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px -10px rgba(0, 240, 255, 0.25);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #00f0ff 0%, #8b5cf6 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-border {
+            position: relative;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, rgba(0,240,255,0.3), rgba(139,92,246,0.3));
+            padding: 1px;
+        }
+
+        .gradient-border-inner {
+            background: #0a0a16;
+            border-radius: calc(0.75rem - 1px);
+        }
+
+        /* Interactive Cursor Glow */
+        #cursor-glow {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 500px;
+            height: 500px;
+            margin-left: -250px;
+            margin-top: -250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0, 240, 255, 0.05) 40%, rgba(0, 0, 0, 0) 70%);
+            z-index: 10;
+            transition: transform 0.05s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-[#0a0a16] text-slate-100 font-sans overflow-x-hidden selection:bg-purple-500 selection:text-white">
+
+    <!-- Cursor Follower Glow -->
+    <div id="cursor-glow"></div>
+
+    <!-- Navigation Header -->
+    <header class="fixed top-0 left-0 w-full z-50 transition-all duration-300 py-4 px-6 md:px-12" id="navbar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between glass-panel rounded-full px-6 py-3 shadow-2xl">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 via-purple-600 to-pink-500 flex items-center justify-center text-white font-bold text-xl group-hover:rotate-12 transition-transform duration-300 shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid font-bold fa-atom text-lg"></i>
+                </div>
+                <span class="font-display font-bold text-xl tracking-wider text-white">NEBULA<span class="gradient-text">CRAFT</span></span>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+                <a href="#hero" class="text-slate-300 hover:text-cyan-400 transition-colors">Home</a>
+                <a href="#projects" class="text-slate-300 hover:text-cyan-400 transition-colors">Showcase</a>
+                <a href="#playground" class="text-slate-300 hover:text-cyan-400 transition-colors">Particle Synth</a>
+                <a href="#timeline" class="text-slate-300 hover:text-cyan-400 transition-colors">Experience</a>
+            </nav>
+
+            <!-- Audio Toggle & Action Button -->
+            <div class="flex items-center gap-4">
+                <button id="sound-toggle" title="Toggle Sound Effects" class="w-10 h-10 rounded-full bg-slate-800/80 hover:bg-purple-600/30 text-slate-300 hover:text-cyan-400 border border-slate-700/50 flex items-center justify-center transition-all duration-300">
+                    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+                </button>
+                <a href="#playground" class="hidden sm:inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300 transform hover:-translate-y-0.5">
+                    Launch Studio
+                </a>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-slate-300 hover:text-white text-xl">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Drawer -->
+        <div id="mobile-menu" class="hidden md:hidden max-w-7xl mx-auto mt-2 glass-panel rounded-2xl p-6 flex-col gap-4 text-center">
+            <a href="#hero" class="mobile-link text-slate-200 hover:text-cyan-400 py-2">Home</a>
+            <a href="#projects" class="mobile-link text-slate-200 hover:text-cyan-400 py-2">Showcase</a>
+            <a href="#playground" class="mobile-link text-slate-200 hover:text-cyan-400 py-2">Particle Synth</a>
+            <a href="#timeline" class="mobile-link text-slate-200 hover:text-cyan-400 py-2">Experience</a>
+        </div>
+    </header>
+
+    <!-- SECTION 1: HERO SECTION -->
+    <section id="hero" class="relative min-h-screen flex items-center justify-center pt-24 pb-16 px-6 overflow-hidden">
+        <!-- Canvas Background -->
+        <canvas id="universe-canvas" class="absolute inset-0 w-full h-full z-0 pointer-events-auto"></canvas>
+
+        <!-- Floating Decorative Cosmic Orbs -->
+        <div class="absolute top-1/4 left-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-10 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style="animation-delay: 2s;"></div>
+
+        <!-- Hero Content -->
+        <div class="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center">
+            
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-cyan-500/30 text-cyan-300 text-xs font-semibold tracking-wider uppercase mb-8 animate-float">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                Interactive Cosmic Studio v2.5
+            </div>
+
+            <!-- Title -->
+            <h1 class="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+                Crafting Digital Universes With <span class="gradient-text">Code & Creativity</span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-base sm:text-lg text-slate-400 max-w-2xl mb-10 leading-relaxed">
+                Welcome to Nebula Craft — an immersive playground merging generative art, WebGL physics, cutting-edge web applications, and interactive audio visualizers.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <a href="#projects" class="px-8 py-4 rounded-full font-semibold text-sm text-white bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500 hover:opacity-95 transition-all duration-300 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 group">
+                    <span>Explore Showcase</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </a>
+                <a href="#playground" class="px-8 py-4 rounded-full font-semibold text-sm text-slate-200 glass-card hover:border-cyan-400/50 hover:text-white transition-all duration-300 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-cyan-400"></i>
+                    <span>Try Particle Studio</span>
+                </a>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <a href="#projects" class="mt-16 text-slate-500 hover:text-cyan-400 transition-colors animate-bounce flex flex-col items-center gap-2">
+                <span class="text-xs tracking-widest uppercase">Scroll Down</span>
+                <i class="fa-solid fa-chevron-down text-sm"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- SECTION 2: PROJECT SHOWCASE -->
+    <section id="projects" class="py-24 px-6 md:px-12 relative z-10 max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+                <h2 class="text-xs uppercase tracking-widest font-semibold text-cyan-400 mb-2">Portfolio Showcase</h2>
+                <h3 class="font-display text-3xl sm:text-4xl font-bold text-white">Interactive Creations</h3>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap gap-2 glass-panel p-1.5 rounded-2xl border-slate-800">
+                <button class="filter-btn active px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 bg-purple-600 text-white" data-filter="all">All Works</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 text-slate-400 hover:text-white" data-filter="web">Web Dev</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 text-slate-400 hover:text-white" data-filter="ai">AI Tools</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 text-slate-400 hover:text-white" data-filter="3d">3D Art</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 text-slate-400 hover:text-white" data-filter="game">Mini Games</button>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="projects-grid">
+            <!-- Dynamic Project Cards Will Be Generated via JS -->
+        </div>
+    </section>
+
+    <!-- SECTION 3: INTERACTIVE PARTICLE SYNTH PLAYGROUND -->
+    <section id="playground" class="py-20 px-6 md:px-12 relative z-10 max-w-7xl mx-auto">
+        <div class="glass-panel rounded-3xl p-6 sm:p-10 border border-purple-500/30 relative overflow-hidden">
+            <!-- Background Glows -->
+            <div class="absolute -top-20 -right-20 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <span class="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-wider">Interactive Creative Tool</span>
+                <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mt-3 mb-2">Cosmic Particle Painter & Synth</h2>
+                <p class="text-slate-400 text-sm">Draw or click inside the canvas below to emit interactive acoustic particle bursts. Customize physics, colors, and generative resonance in real-time.</p>
+            </div>
+
+            <!-- Interactive Canvas Playground -->
+            <div class="relative w-full h-[450px] rounded-2xl overflow-hidden border border-slate-700/60 bg-[#05050d] cursor-crosshair group" id="canvas-container">
+                <canvas id="painter-canvas" class="w-full h-full block"></canvas>
+                
+                <!-- Overlay Instructions -->
+                <div class="absolute top-4 left-4 glass-card px-3 py-1.5 rounded-lg text-xs text-slate-300 pointer-events-none flex items-center gap-2">
+                    <i class="fa-solid fa-hand-pointer text-cyan-400"></i>
+                    <span>Click & Drag to Paint Particles</span>
+                </div>
+
+                <!-- Canvas Control Bar -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full flex flex-wrap items-center justify-center gap-6 text-xs shadow-xl border border-purple-500/30 max-w-[90%]">
+                    <!-- Color Picker -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-slate-300 font-medium">Color:</label>
+                        <input type="color" id="particle-color" value="#00f0ff" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer">
+                    </div>
+
+                    <!-- Particle Speed Slider -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-slate-300 font-medium">Speed:</label>
+                        <input type="range" id="particle-speed" min="1" max="10" value="4" class="w-20 accent-purple-500 cursor-pointer">
+                    </div>
+
+                    <!-- Particle Size Slider -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-slate-300 font-medium">Size:</label>
+                        <input type="range" id="particle-size" min="2" max="15" value="5" class="w-20 accent-cyan-400 cursor-pointer">
+                    </div>
+
+                    <!-- Clear Button -->
+                    <button id="clear-painter" class="px-3 py-1 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/40 border border-red-500/30 transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: EXPERIENCE & SKILLS TIMELINE -->
+    <section id="timeline" class="py-24 px-6 md:px-12 relative z-10 max-w-7xl mx-auto">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-xs uppercase tracking-widest font-semibold text-cyan-400 mb-2">Journey & Proficiency</h2>
+            <h3 class="font-display text-3xl sm:text-4xl font-bold text-white">Experience & Skill Matrix</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            
+            <!-- Experience Timeline -->
+            <div class="space-y-8 relative before:absolute before:inset-0 before:left-3.5 sm:before:left-5 before:w-0.5 before:bg-gradient-to-b before:from-cyan-500 before:via-purple-500 before:to-transparent">
+                
+                <!-- Timeline Item 1 -->
+                <div class="relative pl-10 sm:pl-12 group">
+                    <div class="absolute left-0 top-1.5 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-slate-900 border-2 border-cyan-400 flex items-center justify-center text-cyan-400 group-hover:scale-110 group-hover:bg-cyan-400 group-hover:text-slate-900 transition-all duration-300 shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-rocket text-xs sm:text-sm"></i>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <span class="text-xs text-cyan-400 font-semibold uppercase tracking-wider">2024 - Present</span>
+                        <h4 class="text-lg font-bold text-white mt-1">Lead Creative Developer</h4>
+                        <p class="text-xs text-purple-300 mb-3">Nebula Craft Studios</p>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Architecting high-performance WebGL graphics engines, interactive 3D web applications, and AI-driven UI components for global creative brands.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="relative pl-10 sm:pl-12 group">
+                    <div class="absolute left-0 top-1.5 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-slate-900 border-2 border-purple-500 flex items-center justify-center text-purple-400 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-slate-900 transition-all duration-300 shadow-lg shadow-purple-500/20">
+                        <i class="fa-solid fa-code text-xs sm:text-sm"></i>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <span class="text-xs text-purple-400 font-semibold uppercase tracking-wider">2022 - 2024</span>
+                        <h4 class="text-lg font-bold text-white mt-1">Senior Interactive Engineer</h4>
+                        <p class="text-xs text-cyan-300 mb-3">Vortex Creative Labs</p>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Developed interactive canvas applications, real-time audio visualization tools, and micro-frontend architectures with React and Three.js.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="relative pl-10 sm:pl-12 group">
+                    <div class="absolute left-0 top-1.5 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-slate-900 border-2 border-pink-500 flex items-center justify-center text-pink-400 group-hover:scale-110 group-hover:bg-pink-500 group-hover:text-slate-900 transition-all duration-300 shadow-lg shadow-pink-500/20">
+                        <i class="fa-solid fa-gamepad text-xs sm:text-sm"></i>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <span class="text-xs text-pink-400 font-semibold uppercase tracking-wider">2020 - 2022</span>
+                        <h4 class="text-lg font-bold text-white mt-1">Frontend & Mini-Game Developer</h4>
+                        <p class="text-xs text-purple-300 mb-3">Aether Tech</p>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Built engaging gamified web experiences, interactive particle visualizers, and responsive design systems.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Skills Progress & Badges -->
+            <div class="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6">
+                <h4 class="font-display text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-microchip text-cyan-400"></i> Technical Mastery
+                </h4>
+
+                <!-- Skill Bar 1 -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-200">JavaScript / ES6+ & Canvas API</span>
+                        <span class="text-cyan-400">95%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                        <div class="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full transition-all duration-1000" style="width: 95%;"></div>
+                    </div>
+                </div>
+
+                <!-- Skill Bar 2 -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-200">WebGL / Three.js / Generative Art</span>
+                        <span class="text-purple-400">88%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                        <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000" style="width: 88%;"></div>
+                    </div>
+                </div>
+
+                <!-- Skill Bar 3 -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-200">React.js & Modern UI/UX</span>
+                        <span class="text-pink-400">92%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                        <div class="h-full bg-gradient-to-r from-pink-500 to-cyan-400 rounded-full transition-all duration-1000" style="width: 92%;"></div>
+                    </div>
+                </div>
+
+                <!-- Skill Bar 4 -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-200">Web Audio API / Tone.js</span>
+                        <span class="text-cyan-400">82%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                        <div class="h-full bg-gradient-to-r from-cyan-400 to-purple-600 rounded-full transition-all duration-1000" style="width: 82%;"></div>
+                    </div>
+                </div>
+
+                <!-- Achievements Badges Grid -->
+                <div class="pt-6 border-t border-slate-800">
+                    <h5 class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-4">Achievement Badges</h5>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="glass-card p-3 rounded-xl hover:border-cyan-400/50 transition-colors">
+                            <i class="fa-solid fa-trophy text-amber-400 text-xl mb-1"></i>
+                            <p class="text-[10px] font-medium text-slate-300">CodePen Featured</p>
+                        </div>
+                        <div class="glass-card p-3 rounded-xl hover:border-purple-400/50 transition-colors">
+                            <i class="fa-solid fa-certificate text-purple-400 text-xl mb-1"></i>
+                            <p class="text-[10px] font-medium text-slate-300">WebGL Master</p>
+                        </div>
+                        <div class="glass-card p-3 rounded-xl hover:border-pink-400/50 transition-colors">
+                            <i class="fa-solid fa-bolt text-pink-400 text-xl mb-1"></i>
+                            <p class="text-[10px] font-medium text-slate-300">100% Performance</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- PROJECT PREVIEW MODAL -->
+    <div id="project-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 sm:p-8 border border-purple-500/40 relative transform scale-95 transition-all duration-300" id="modal-container">
+            <!-- Close Button -->
+            <button id="close-modal" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-800/80 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Modal Content Dynamic -->
+            <div id="modal-body">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/80 py-12 px-6 text-center text-xs text-slate-500 relative z-10 bg-[#070711]">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">N</div>
+                <span class="font-display font-semibold text-slate-300">Nebula Craft Studio</span>
+            </div>
+            <p>© 2026 Nebula Craft. Designed for CodePen & GitHub Pages.</p>
+            <div class="flex items-center gap-4 text-slate-400 text-base">
+                <a href="#" class="hover:text-cyan-400 transition-colors"><i class="fa-brands fa-github"></i></a>
+                <a href="#" class="hover:text-cyan-400 transition-colors"><i class="fa-brands fa-codepen"></i></a>
+                <a href="#" class="hover:text-cyan-400 transition-colors"><i class="fa-brands fa-twitter"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- VANILLA JAVASCRIPT LOGIC -->
+    <script>
+        /* ==========================================================================
+           1. AUDIO SYNTHESIS & SOUND EFFECTS (Tone.js)
+           ========================================================================== */
+        let soundEnabled = true;
+        let synth = null;
+
+        // Initialize Web Audio Synth safely on user interaction
+        function initAudio() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.2 }
+                }).toDestination();
+                synth.volume.value = -12;
+            }
+        }
+
+        const notes = ['C4', 'E4', 'G4', 'B4', 'C5', 'E5', 'G5', 'A5'];
+
+        function playParticleSound(speed) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (synth && Tone.context.state === 'running') {
+                    const noteIndex = Math.floor(Math.min(speed, 10) / 10 * (notes.length - 1));
+                    synth.triggerAttackRelease(notes[noteIndex], "16n");
+                }
+            } catch (e) {
+                // Audio context fallback safeguard
+            }
+        }
+
+        // Sound Toggle Button
+        const soundToggleBtn = document.getElementById('sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+
+        soundToggleBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) {
+                soundIcon.className = "fa-solid fa-volume-high";
+                soundToggleBtn.classList.remove('text-red-400');
+                if (Tone.context.state !== 'running') Tone.start();
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark";
+                soundToggleBtn.classList.add('text-red-400');
+            }
+        });
+
+        /* ==========================================================================
+           2. INTERACTIVE CURSOR TRACKING GLOW
+           ========================================================================== */
+        const cursorGlow = document.getElementById('cursor-glow');
+        window.addEventListener('mousemove', (e) => {
+            cursorGlow.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+        });
+
+        /* ==========================================================================
+           3. HERO CANVAS: UNIVERSE PARTICLE PHYSICS
+           ========================================================================== */
+        const universeCanvas = document.getElementById('universe-canvas');
+        const uCtx = universeCanvas.getContext('2d');
+
+        let uWidth = universeCanvas.width = window.innerWidth;
+        let uHeight = universeCanvas.height = window.innerHeight;
+
+        let mousePos = { x: uWidth / 2, y: uHeight / 2 };
+
+        window.addEventListener('resize', () => {
+            uWidth = universeCanvas.width = window.innerWidth;
+            uHeight = universeCanvas.height = window.innerHeight;
+        });
+
+        universeCanvas.addEventListener('mousemove', (e) => {
+            mousePos.x = e.clientX;
+            mousePos.y = e.clientY;
+        });
+
+        class UniverseParticle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * uWidth;
+                this.y = Math.random() * uHeight;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.size = Math.random() * 2 + 0.5;
+                this.alpha = Math.random() * 0.6 + 0.2;
+                this.color = ['#00f0ff', '#8b5cf6', '#ff007f'][Math.floor(Math.random() * 3)];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Mouse interaction / gravity push
+                const dx = mousePos.x - this.x;
+                const dy = mousePos.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    const force = (120 - dist) / 120;
+                    this.x -= (dx / dist) * force * 2;
+                    this.y -= (dy / dist) * force * 2;
+                }
+
+                // Wrap boundaries
+                if (this.x < 0 || this.x > uWidth) this.vx *= -1;
+                if (this.y < 0 || this.y > uHeight) this.vy *= -1;
+            }
+
+            draw() {
+                uCtx.save();
+                uCtx.globalAlpha = this.alpha;
+                uCtx.fillStyle = this.color;
+                uCtx.beginPath();
+                uCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                uCtx.fill();
+                uCtx.restore();
+            }
+        }
+
+        const universeParticles = Array.from({ length: 120 }, () => new UniverseParticle());
+
+        function animateUniverse() {
+            uCtx.clearRect(0, 0, uWidth, uHeight);
+
+            // Connect nearby particles with glow lines
+            for (let i = 0; i < universeParticles.length; i++) {
+                universeParticles[i].update();
+                universeParticles[i].draw();
+
+                for (let j = i + 1; j < universeParticles.length; j++) {
+                    const dx = universeParticles[i].x - universeParticles[j].x;
+                    const dy = universeParticles[i].y - universeParticles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 100) {
+                        uCtx.save();
+                        uCtx.globalAlpha = (1 - dist / 100) * 0.25;
+                        uCtx.strokeStyle = '#8b5cf6';
+                        uCtx.lineWidth = 0.5;
+                        uCtx.beginPath();
+                        uCtx.moveTo(universeParticles[i].x, universeParticles[i].y);
+                        uCtx.lineTo(universeParticles[j].x, universeParticles[j].y);
+                        uCtx.stroke();
+                        uCtx.restore();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animateUniverse);
+        }
+        animateUniverse();
+
+        /* ==========================================================================
+           4. PORTFOLIO SHOWCASE DATA & FILTER SYSTEM
+           ========================================================================== */
+        const projectsData = [
+            {
+                id: 1,
+                title: 'Quantum WebGL Engine',
+                category: '3d',
+                icon: 'fa-cubes',
+                badge: '3D Graphics',
+                desc: 'Real-time raymarching and particle physics engine running in browser.',
+                fullDesc: 'Built with Three.js and custom GLSL shaders. Features dynamic atmospheric scattering, bloom post-processing, and interactive audio reactivity.',
+                tech: ['Three.js', 'GLSL', 'WebGL', 'TypeScript']
+            },
+            {
+                id: 2,
+                title: 'Aetheria AI Studio',
+                category: 'ai',
+                icon: 'fa-brain',
+                badge: 'AI Platform',
+                desc: 'Generative prompt-to-3D asset pipeline for game developers.',
+                fullDesc: 'Empowers indie developers to generate textured 3D assets directly from natural language prompts using custom neural diffusion models.',
+                tech: ['React', 'Python API', 'Tailwind', 'Three.js']
+            },
+            {
+                id: 3,
+                title: 'Cosmic Cyberpunk Arcade',
+                category: 'game',
+                icon: 'fa-gamepad',
+                badge: 'Canvas Game',
+                desc: 'Retro-futuristic space shooter with procedural wave generation.',
+                fullDesc: 'Engineered with pure vanilla JS HTML5 Canvas. Includes spatial sound effects, leaderboard tracking, and customizable ship upgrades.',
+                tech: ['Vanilla JS', 'Canvas API', 'Tone.js']
+            },
+            {
+                id: 4,
+                title: 'HyperDrive Dashboard',
+                category: 'web',
+                icon: 'fa-chart-line',
+                badge: 'Web App',
+                desc: 'High-frequency telemetry & crypto-analytics dashboard.',
+                fullDesc: 'Real-time WebSocket data streaming dashboard with customizable glassmorphism widgets, chart visualizers, and instant theme switching.',
+                tech: ['Vue.js', 'Tailwind CSS', 'D3.js', 'WebSockets']
+            },
+            {
+                id: 5,
+                title: 'Starlight Audio Visualizer',
+                category: 'web',
+                icon: 'fa-music',
+                badge: 'Audio Tool',
+                desc: 'Interactive spectrum visualizer reacting to microphone audio.',
+                fullDesc: 'Utilizes the Web Audio API FFT analysis to construct dynamic radial particle spectrums and reactive neon geometry.',
+                tech: ['HTML5 Audio', 'Canvas API', 'Web Audio']
+            },
+            {
+                id: 6,
+                title: 'Neural Matrix Assistant',
+                category: 'ai',
+                icon: 'fa-robot',
+                badge: 'AI Tool',
+                desc: 'Contextual code assistant trained on WebGL shaders.',
+                fullDesc: 'Specialized LLM assistant integrated into web editors that generates optimized fragment shaders and live canvas code previews.',
+                tech: ['OpenAI API', 'React', 'Monaco Editor']
+            }
+        ];
+
+        const projectsGrid = document.getElementById('projects-grid');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        function renderProjects(category = 'all') {
+            projectsGrid.innerHTML = '';
+            const filtered = category === 'all' 
+                ? projectsData 
+                : projectsData.filter(p => p.category === category);
+
+            filtered.forEach(project => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-6 rounded-2xl flex flex-col justify-between cursor-pointer group';
+                card.onclick = () => openModal(project);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid ${project.icon} text-xl"></i>
+                            </div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">${project.badge}</span>
+                        </div>
+                        <h4 class="font-display text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">${project.title}</h4>
+                        <p class="text-slate-400 text-sm mb-6">${project.desc}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-800 text-xs">
+                        <span class="text-purple-400 font-medium">Click for Specs</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-slate-500 group-hover:text-cyan-400 transition-colors"></i>
+                    </div>
+                `;
+                projectsGrid.appendChild(card);
+            });
+        }
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-purple-600', 'text-white');
+                    b.classList.add('text-slate-400');
+                });
+                btn.classList.add('bg-purple-600', 'text-white');
+                btn.classList.remove('text-slate-400');
+
+                renderProjects(btn.getAttribute('data-filter'));
+            });
+        });
+
+        renderProjects();
+
+        /* ==========================================================================
+           5. MODAL SYSTEM FOR PROJECTS
+           ========================================================================== */
+        const modal = document.getElementById('project-modal');
+        const modalContainer = document.getElementById('modal-container');
+        const modalBody = document.getElementById('modal-body');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        function openModal(project) {
+            modalBody.innerHTML = `
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid ${project.icon}"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-purple-400 uppercase tracking-widest font-semibold">${project.badge}</span>
+                        <h3 class="font-display text-2xl font-bold text-white">${project.title}</h3>
+                    </div>
+                </div>
+                <p class="text-slate-300 text-sm leading-relaxed mb-6">${project.fullDesc}</p>
+                
+                <h5 class="text-xs uppercase font-semibold text-slate-400 mb-3">Technologies Used</h5>
+                <div class="flex flex-wrap gap-2 mb-8">
+                    ${project.tech.map(t => `<span class="px-3 py-1 rounded-lg bg-slate-800/80 text-cyan-300 text-xs border border-slate-700">${t}</span>`).join('')}
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="closeModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold text-xs tracking-wider uppercase hover:opacity-90 transition-opacity">
+                        Close Preview
+                    </button>
+                </div>
+            `;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContainer.classList.remove('scale-95');
+            modalContainer.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContainer.classList.remove('scale-100');
+            modalContainer.classList.add('scale-95');
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        /* ==========================================================================
+           6. PARTICLE PAINTER CANVAS & INTERACTIVE SYNTH
+           ========================================================================== */
+        const painterCanvas = document.getElementById('painter-canvas');
+        const pCtx = painterCanvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvas-container');
+
+        function resizePainterCanvas() {
+            painterCanvas.width = canvasContainer.clientWidth;
+            painterCanvas.height = canvasContainer.clientHeight;
+        }
+        resizePainterCanvas();
+        window.addEventListener('resize', resizePainterCanvas);
+
+        let isDrawing = false;
+        let drawnParticles = [];
+
+        // Controls
+        const colorPicker = document.getElementById('particle-color');
+        const speedSlider = document.getElementById('particle-speed');
+        const sizeSlider = document.getElementById('particle-size');
+        const clearBtn = document.getElementById('clear-painter');
+
+        class PainterParticle {
+            constructor(x, y, color, speed, size) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = parseFloat(size);
+                const angle = Math.random() * Math.PI * 2;
+                const spd = (Math.random() * 0.5 + 0.5) * parseFloat(speed);
+                this.vx = Math.cos(angle) * spd;
+                this.vy = Math.sin(angle) * spd;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.015 + 0.005;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+
+            draw() {
+                pCtx.save();
+                pCtx.globalAlpha = Math.max(0, this.life);
+                pCtx.fillStyle = this.color;
+                pCtx.shadowBlur = 10;
+                pCtx.shadowColor = this.color;
+                pCtx.beginPath();
+                pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pCtx.fill();
+                pCtx.restore();
+            }
+        }
+
+        function addBurst(x, y) {
+            const count = 8;
+            const color = colorPicker.value;
+            const speed = speedSlider.value;
+            const size = sizeSlider.value;
+
+            for (let i = 0; i < count; i++) {
+                drawnParticles.push(new PainterParticle(x, y, color, speed, size));
+            }
+            playParticleSound(speed);
+        }
+
+        // Pointer Events
+        function getCanvasCoords(e) {
+            const rect = painterCanvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        painterCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const coords = getCanvasCoords(e);
+            addBurst(coords.x, coords.y);
+        });
+
+        painterCanvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                const coords = getCanvasCoords(e);
+                addBurst(coords.x, coords.y);
+            }
+        });
+
+        window.addEventListener('mouseup', () => isDrawing = false);
+
+        // Touch support
+        painterCanvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const touch = e.touches[0];
+            const coords = getCanvasCoords(touch);
+            addBurst(coords.x, coords.y);
+        });
+
+        painterCanvas.addEventListener('touchmove', (e) => {
+            if (isDrawing) {
+                const touch = e.touches[0];
+                const coords = getCanvasCoords(touch);
+                addBurst(coords.x, coords.y);
+            }
+        });
+
+        window.addEventListener('touchend', () => isDrawing = false);
+
+        clearBtn.addEventListener('click', () => {
+            drawnParticles = [];
+            pCtx.clearRect(0, 0, painterCanvas.width, painterCanvas.height);
+        });
+
+        function animatePainter() {
+            // Slight trails effect
+            pCtx.fillStyle = 'rgba(5, 5, 13, 0.2)';
+            pCtx.fillRect(0, 0, painterCanvas.width, painterCanvas.height);
+
+            for (let i = drawnParticles.length - 1; i >= 0; i--) {
+                const p = drawnParticles[i];
+                p.update();
+                p.draw();
+
+                if (p.life <= 0) {
+                    drawnParticles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animatePainter);
+        }
+        animatePainter();
+
+        /* ==========================================================================
+           7. MOBILE MENU & NAV
+           ========================================================================== */
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('flex');
+        });
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                mobileMenu.classList.remove('flex');
+            });
+        });
+    </script>
+</body>
+</html>
